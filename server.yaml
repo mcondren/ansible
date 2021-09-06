@@ -149,6 +149,8 @@
             - zsh
             - zsh-common
             - bat
+            - g++
+            - libncurses-dev
         state: latest
         update_cache: yes
         
@@ -166,6 +168,30 @@
     - name: Installing oh-my-zsh
       shell: yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
       
+    - git:
+        repo: https://github.com/mobile-shell/mosh.git
+        dest: /root/.mosh
+     
+     - name: autogen mosh configure file
+       command: ./autogen.sh
+       args:
+         chdir: /root/.mosh
+
+     - name: configure mosh build
+       command: ./configure
+       args:
+         chdir: /root/.mosh
+
+     - name: Build mosh
+       command: make
+       args:
+         chdir: /root/.mosh
+
+    - name: Install mosh
+      command: make install
+      args:
+        chdir: /root/.mosh
+
     - name: Add github identity
       copy:
         dest: "/root/.gitconfig"
