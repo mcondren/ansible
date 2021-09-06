@@ -148,21 +148,12 @@
             - xkb-data
             - zsh
             - zsh-common
-            - mosh
+            - bat
         state: latest
         update_cache: yes
         
-    - name: Install vimplug
-      shell: sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-        
-    - name: Download Bat (Wish Debian apt was up to date...)
-      get_url:https://github.com/sharkdp/bat/releases/download/v0.17.1/bat_0.17.1_arm64.deb
-      dest: /root/bat.deb
-      force_basic_auth: yes
-     
-    - name: Install bat
-      apt:
-        deb: /root/bat.deb
+    # - name: Install vimplug
+    #  shell: sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
         
     - name: Download fzf
       git:
