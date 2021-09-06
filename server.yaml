@@ -166,7 +166,7 @@
       shell: yes | /root/.fzf/install
           
     - name: Installing oh-my-zsh
-      shell: yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+      shell: yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
       
     - git:
         repo: https://github.com/mobile-shell/mosh.git
@@ -229,7 +229,7 @@
     - name: Clone docker repo
       git:
         repo: git@github.com:mcondren/docker.git
-        version: main
+        version: master
         dest: /root/docker
         key_file: /root/.ssh/github
         accept_hostkey: yes
