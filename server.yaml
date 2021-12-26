@@ -118,6 +118,7 @@
             - pciutils
             - picocom
             - pkg-config
+            - plocate
             - powermgmt-base
             - ppp
             - protobuf-compiler
