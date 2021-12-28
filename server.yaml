@@ -11,12 +11,40 @@
         insertbefore="^nameserver"
         line="nameserver 8.8.8.8"
 
+    - name: Fstab
+      blockinfile: 
+        path: /etc/fstab
+        block: |                                                                
+          UUID=9d888b52-4cd0-4fef-a2b9-80f999a4427f /mnt/media ext4 errors=remount-ro 0 2
+          UUID=71413a5e-7206-4669-968a-839d9b0f91e5 /mnt/backup ext4 errors=remount-ro 0 2
+          ramdisk /tmp/cache tmpfs defaults,size=1G,x-gvfs-show 0 0
+
+    - name: Create mountpoint media
+      become: true
+      file:
+        path: /mnt/media
+        state: directory
+        owner: root
+        group: root
+        recurse: yes
+        mode: '0755'
+
+    - name: Create mountpoints backup
+      become: true
+      file:
+        path: /mnt/backup
+        state: directory
+        owner: root
+        group: root
+        recurse: yes
+        mode: '0755'
+
     - name: install essential packages
       apt: 
         name:   
           - git
           - software-properties-common
-          - python-pip
+          - python3-pip
           - apt-transport-https
           - ca-certificates
           - curl
@@ -123,11 +151,7 @@
             - ppp
             - protobuf-compiler
             - psmisc
-            - python
-            - python2
-            - python2.7
             - python3
-            - python3.7
             - reportbug
             - ripgrep
             - rsync
@@ -173,20 +197,20 @@
         repo: https://github.com/mobile-shell/mosh.git
         dest: /root/.mosh
      
-     - name: autogen mosh configure file
-       command: ./autogen.sh
-       args:
-         chdir: /root/.mosh
+    - name: autogen mosh configure file
+      command: ./autogen.sh
+      args:
+        chdir: /root/.mosh
 
-     - name: configure mosh build
-       command: ./configure
-       args:
-         chdir: /root/.mosh
+    - name: configure mosh build
+      command: ./configure
+      args:
+        chdir: /root/.mosh
 
-     - name: Build mosh
-       command: make
-       args:
-         chdir: /root/.mosh
+    - name: Build mosh
+      command: make
+      args:
+        chdir: /root/.mosh
 
     - name: Install mosh
       command: make install
