@@ -63,8 +63,16 @@
       apt: 
         name:
             - docker-compose
+            - rclone  
             - appstream
             - attr
+            - linux-headers-$(uname -r)
+            - linux-image-amd64
+            - spl
+            - kmod
+            - zfsutils-linux
+            - zfs-dkms 
+            - zfs-zed
             - autoconf
             - automake
             - autopoint
