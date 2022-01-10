@@ -240,7 +240,25 @@
         accept_hostkey: yes
       # ssh-agent doesn't allow key to pass through remote sudo commands.
       become: no
-      
+ 
+    - name: Set Crontab env variable for rclone/rsync
+      cron:
+        name: SSH_AUTH_SOCK
+        env: yes
+        job: /tmp/ssh-agent-root-cron
+
+    - name: Add weekly rclone backup job to crontab
+      cron:
+        name: "rclone backup"
+        special_time: weekly
+        job: "/usr/bin/rclone sync /backup/docker crypt:backup/docker" 
+
+    - name: Add weekly zpool scrub to crontab
+      cron:
+        name: "zpool scrub"
+        special_time: weekly
+        job: "zpool scrub backup"
+
     - name: Upgrade all packages
       apt: upgrade=safe
 
