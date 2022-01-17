@@ -172,7 +172,10 @@
           
     - name: Installing oh-my-zsh
       shell: yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
-      
+     
+    - name: Install powerlevel10k theme
+      shell: yes | sh -c "$(git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k)" --unattended
+
     - git:
         repo: https://github.com/mobile-shell/mosh.git
         dest: /root/.mosh
