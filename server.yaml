@@ -63,6 +63,7 @@
       apt: 
         name:
             - docker-compose
+            - zoxide
             - rclone  
             - appstream
             - attr
@@ -99,7 +100,6 @@
             - fonts-dejavu-core
             - gdisk
             - hdparm
-            - htop
             - iw
             - kbd
             - keyboard-configuration
@@ -156,6 +156,7 @@
             - bat
             - g++
             - libncurses-dev
+            - cargo
         state: latest
         update_cache: yes
         
@@ -175,6 +176,12 @@
      
     - name: Install powerlevel10k theme
       shell: yes | sh -c "$(git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k)" --unattended
+
+    - name: Add cargo bin to $PATH
+      shell: yes | sh -c "$(export PATH=$HOME/.cargo/bin:$PATH)"
+
+    - name: Install dust (not in pkg manager yet) and Ansible doesn't have cargo support
+      shell: yes | sh -c "$(cargo install du-dust)" --unattended
 
     - git:
         repo: https://github.com/mobile-shell/mosh.git
