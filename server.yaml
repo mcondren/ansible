@@ -51,7 +51,7 @@
           - containerd.io
         state: absent          
         update_cache: yes
-        become: yes
+      become: yes
 
     - name: Install docker
       apt: 
@@ -237,6 +237,7 @@
       copy:
         src: "/etc/zsh/zshenv"
         dest: "{{home}}/.zshenv"
+      become: yes  
                   
     - name: Adding github key
       shell: |
@@ -247,7 +248,7 @@
     - name: Clone dotfiles repo
       git:
         repo: git@github.com:mcondren/dotfiles.git
-        version: main
+        version: master
         dest: "{{home}}/dotfiles"
         key_file: "{{home}}/.ssh/github"
         accept_hostkey: yes
