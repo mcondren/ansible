@@ -8,18 +8,29 @@
   vars:  
     home: "{{ansible_user_dir}}"
     codename: "{{ansible_distribution_release}}"
+    user: "{{ansible_user}}"
   tasks: 
     
     - name: Confirm $HOME
       ansible.builtin.debug:
         msg: "$HOME is set to {{ home }}"
-    
-    - name: Add 8.8.8.8 to resolv.conf to fix macvlan stuff
-      lineinfile: path=/etc/resolv.conf
-        insertbefore="^nameserver"
-        line="nameserver 8.8.8.8"
-      become: yes
 
+    - name: Create .config dir
+      file:
+        path: "{{home}}/.config"
+        state: directory
+
+    - name: Create zsh config dir
+      file:
+        path: "{{home}}/.config/zsh"
+        state: directory
+
+    - name: Create nvim config dir
+      file:
+        path: "{{home}}/.config/nvim"
+        state: directory
+
+    
     - name: install essential packages
       apt: 
         name:   
@@ -81,9 +92,6 @@
             - rclone  
             - appstream
             - attr
-            - "linux-headers-{{ansible_kernel}}"
-            - linux-image-amd64
-            - spl
             - kmod
             - zfsutils-linux
             - zfs-dkms 
@@ -115,7 +123,6 @@
             - gdisk
             - hdparm
             - iw
-            - kbd
             - keyboard-configuration
             - laptop-detect
             - locales
@@ -172,21 +179,17 @@
             - libncurses-dev
             - cargo
             - fzf  
+            - exa
+            - libssl-dev
         state: latest
         update_cache: yes
       become: yes
 
-    # - name: Install vimplug
-    #  shell: sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-        
-        #  - name: Download fzf
-        #    git:
-        #      repo: https://github.com/junegunn/fzf.git
-        #      dest: /root/.fzf
-        #      
-        #  - name: Installing fzf
-        #    shell: yes | /root/.fzf/install
-          
+    - name: Install thefuck package plugin
+      pip:
+        name: thefuck
+        executable: pip3
+
     - name: Installing oh-my-zsh
       shell: yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
      
@@ -200,7 +203,8 @@
       shell: yes | sh -c "$(cargo install du-dust)" --unattended
       become: yes
 
-    - git:
+    - name: Clone mosh repo
+      git:
         repo: https://github.com/mobile-shell/mosh.git
         dest: "{{home}}/mosh"
      
@@ -240,10 +244,12 @@
                   state=present
       become: yes
           
-    - name: Copy .zshrc to $HOME
+    - name: Copy .zshenv to $HOME
       copy:
         src: "/etc/zsh/zshenv"
         dest: "{{home}}/.zshenv"
+        group: "{{user}}"
+        owner: "{{user}}"
       become: yes  
                   
     - name: Adding github key
@@ -261,6 +267,25 @@
         accept_hostkey: yes
       # ssh-agent doesn't allow key to pass through remote sudo commands.
       become: no
+   
+    - name: Create a symbolic links for dotfiles (.zshrc)
+      ansible.builtin.file:
+        src: "{{home}}/dotfiles/.zshrc" 
+        dest: "{{home}}/.config/zsh/.zshrc"
+        state: link
+
+    - name: Create a symbolic links for dotfiles (nvim.init)
+      ansible.builtin.file:
+        src: "{{home}}/dotfiles/init.vim"
+        dest: "{{home}}/.config/nvim/init.vim"
+        state: link
+
+    - name: Create a symbolic links for dotfiles (.p10k.zsh)
+      ansible.builtin.file:
+        src: "{{home}}/dotfiles/.p10k.zsh"
+        dest: "{{home}}/.config/zsh/.p10k.zsh"
+        state: link
+
       
     - name: Clone docker repo
       git:
