@@ -3,13 +3,15 @@
 # ====================================================
 ---
 - hosts: localhost
-  become: yes
+  vars:
+    home: "{{role_path}}"
   tasks: 
     
     - name: Add 8.8.8.8 to resolv.conf to fix macvlan stuff
       lineinfile: path=/etc/resolv.conf
         insertbefore="^nameserver"
         line="nameserver 8.8.8.8"
+      become: yes
 
     - name: install essential packages
       apt: 
@@ -22,17 +24,20 @@
           - curl
           - gnupg-agent
         update_cache: yes
-        
+      become: yes
+
     - name: Install the gpg key for docker
       apt_key:
         url: "https://download.docker.com/linux/debian/gpg"
         state: present
+      become: yes
 
     - name: install docker repo
       apt_repository:
-        repo: "deb [arch=arm64] https://download.docker.com/linux/debian buster stable"
+        repo: "deb [arch=amd64] https://download.docker.com/linux/debian bullseye stable"
         state: present
-        
+      become: yes
+
     - name: Remove old docker
       apt: 
         name:
@@ -46,7 +51,8 @@
           - containerd.io
         state: absent          
         update_cache: yes
-        
+        become: yes
+
     - name: Install docker
       apt: 
         name:
@@ -58,6 +64,7 @@
       until: apt_status is success
       retries: 2
       delay: 5
+      become: yes
 
     - name: install all packages
       apt: 
@@ -157,59 +164,63 @@
             - g++
             - libncurses-dev
             - cargo
+            - fzf  
         state: latest
         update_cache: yes
-        
+      become: yes
+
     # - name: Install vimplug
     #  shell: sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
         
-    - name: Download fzf
-      git:
-        repo: https://github.com/junegunn/fzf.git
-        dest: /root/.fzf
-        
-    - name: Installing fzf
-      shell: yes | /root/.fzf/install
+        #  - name: Download fzf
+        #    git:
+        #      repo: https://github.com/junegunn/fzf.git
+        #      dest: /root/.fzf
+        #      
+        #  - name: Installing fzf
+        #    shell: yes | /root/.fzf/install
           
     - name: Installing oh-my-zsh
       shell: yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
      
     - name: Install powerlevel10k theme
-      shell: yes | sh -c "$(git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k)" --unattended
-
-    - name: Add cargo bin to $PATH
-      shell: yes | sh -c "$(export PATH=$HOME/.cargo/bin:$PATH)"
+      git: 
+        repo: https://github.com/romkatv/powerlevel10k.git 
+        dest: "{{home}}/.oh-my-zsh/custom/themes/powerlevel10k"
+        depth: 1
 
     - name: Install dust (not in pkg manager yet) and Ansible doesn't have cargo support
       shell: yes | sh -c "$(cargo install du-dust)" --unattended
+      become: yes
 
     - git:
         repo: https://github.com/mobile-shell/mosh.git
-        dest: /root/.mosh
+        dest: "{{home}}/.mosh"
      
     - name: autogen mosh configure file
       command: ./autogen.sh
       args:
-        chdir: /root/.mosh
+        chdir: "{{home}}/.mosh"
 
     - name: configure mosh build
       command: ./configure
       args:
-        chdir: /root/.mosh
+        chdir: "{{home}}/.mosh"
 
     - name: Build mosh
       command: make
       args:
-        chdir: /root/.mosh
+        chdir: "{{home}}/.mosh"
 
     - name: Install mosh
       command: make install
       args:
-        chdir: /root/.mosh
+        chdir: "{{home}}/.mosh"
+        become: yes  
 
     - name: Add github identity
       copy:
-        dest: "/root/.gitconfig"
+        dest: "{{home}}/.gitconfig"
         content: |
           [user]
             name = mcondren
@@ -218,25 +229,27 @@
     - name: Export zsh DOTFILE location system-wide
       lineinfile: dest=/etc/zsh/zshenv
                   regexp="^export"
-                  line="export ZDOTDIR=$HOME/.config/zsh"
+                  line="export ZDOTDIR={{home}}/.config/zsh"
                   state=present
+      become: yes
           
     - name: Copy .zshrc to $HOME
       copy:
         src: "/etc/zsh/zshenv"
-        dest: "/root/.zshenv"
+        dest: "{{home}}/.zshenv"
                   
     - name: Adding github key
       shell: |
         eval `ssh-agent -s`
-        ssh-add /root/.ssh/github
-      
+        ssh-add $HOME/.ssh/github
+        ssh-add $HOME/.ssh/id_rsa
+
     - name: Clone dotfiles repo
       git:
-        repo: git@github.com:mcondren/.config.git
+        repo: git@github.com:mcondren/dotfiles.git
         version: main
-        dest: /root/.config
-        key_file: /root/.ssh/github
+        dest: "{{home}}/dotfiles"
+        key_file: "{{home}}/.ssh/github"
         accept_hostkey: yes
       # ssh-agent doesn't allow key to pass through remote sudo commands.
       become: no
@@ -245,8 +258,8 @@
       git:
         repo: git@github.com:mcondren/docker.git
         version: master
-        dest: /root/docker
-        key_file: /root/.ssh/github
+        dest: "{{home}}/docker"
+        key_file: "{{home}}/.ssh/github"
         accept_hostkey: yes
       # ssh-agent doesn't allow key to pass through remote sudo commands.
       become: no
@@ -256,21 +269,25 @@
         name: SSH_AUTH_SOCK
         env: yes
         job: /tmp/ssh-agent-root-cron
+      become: yes  
 
     - name: Add weekly rclone backup job to crontab
       cron:
         name: "rclone backup"
         special_time: weekly
         job: "/usr/bin/rclone sync /backup/docker crypt:backup/docker" 
+      become: yes
 
     - name: Add weekly zpool scrub to crontab
       cron:
         name: "zpool scrub"
         special_time: weekly
         job: "zpool scrub backup"
+      become: yes
 
     - name: Upgrade all packages
       apt: upgrade=safe
+      become: yes
 
   
   
