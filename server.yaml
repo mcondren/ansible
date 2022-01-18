@@ -3,9 +3,16 @@
 # ====================================================
 ---
 - hosts: localhost
-  vars:
-    home: "{{role_path}}"
+  user: matthew
+  become: no  
+  vars:  
+    home: "{{ansible_user_dir}}"
+    codename: "{{ansible_distribution_release}}"
   tasks: 
+    
+    - name: Confirm $HOME
+      ansible.builtin.debug:
+        msg: "$HOME is set to {{ home }}"
     
     - name: Add 8.8.8.8 to resolv.conf to fix macvlan stuff
       lineinfile: path=/etc/resolv.conf
@@ -34,7 +41,7 @@
 
     - name: install docker repo
       apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/debian bullseye stable"
+        repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{codename}} stable"
         state: present
       become: yes
 
@@ -74,7 +81,7 @@
             - rclone  
             - appstream
             - attr
-            - linux-headers-$(uname -r)
+            - "linux-headers-{{ansible_kernel}}"
             - linux-image-amd64
             - spl
             - kmod
@@ -195,28 +202,28 @@
 
     - git:
         repo: https://github.com/mobile-shell/mosh.git
-        dest: "{{home}}/.mosh"
+        dest: "{{home}}/mosh"
      
     - name: autogen mosh configure file
       command: ./autogen.sh
       args:
-        chdir: "{{home}}/.mosh"
+        chdir: "{{home}}/mosh"
 
     - name: configure mosh build
       command: ./configure
       args:
-        chdir: "{{home}}/.mosh"
+        chdir: "{{home}}/mosh"
 
     - name: Build mosh
       command: make
       args:
-        chdir: "{{home}}/.mosh"
+        chdir: "{{home}}/mosh"
 
     - name: Install mosh
       command: make install
       args:
-        chdir: "{{home}}/.mosh"
-        become: yes  
+        chdir: "{{home}}/mosh"
+      become: yes  
 
     - name: Add github identity
       copy:
@@ -229,7 +236,7 @@
     - name: Export zsh DOTFILE location system-wide
       lineinfile: dest=/etc/zsh/zshenv
                   regexp="^export"
-                  line="export ZDOTDIR={{home}}/.config/zsh"
+                  line="export ZDOTDIR=$HOME/.config/zsh"
                   state=present
       become: yes
           
@@ -290,5 +297,9 @@
       apt: upgrade=safe
       become: yes
 
-  
-  
+    - name: Set shell to ZSH
+      user:
+        name: "{{ansible_user_id}}"
+        shell: /bin/zsh
+      become: yes
+        
