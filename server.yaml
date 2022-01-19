@@ -3,17 +3,32 @@
 # ====================================================
 ---
 - hosts: localhost
-  user: matthew
-  become: no  
+  become: no 
+  gather_facts: true 
+  user: "{{lookup('env', 'USER')}}"
   vars:  
     home: "{{ansible_user_dir}}"
     codename: "{{ansible_distribution_release}}"
-    user: "{{ansible_user}}"
+    #user: "{{ansible_user_id}}"
+  vars_prompt:
+    - name: arch
+      prompt: "Select hardware architecture (arm64/amd64):"
+      default: "amd64"   
+      private: no
+
   tasks: 
     
-    - name: Confirm $HOME
+    - name: Confirm variable facts are accurate
       ansible.builtin.debug:
-        msg: "$HOME is set to {{ home }}"
+        msg:
+          - "$HOME is set to {{ home }}"
+          - "User is {{ansible_user}}"
+          - "Codename is {{codename}}"
+          - "Architecture is {{arch}}"  
+    
+    - name: varcheck
+      pause:
+        prompt: "Check variables above. Hit return to continue"
 
     - name: Create .config dir
       file:
@@ -52,7 +67,7 @@
 
     - name: install docker repo
       apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{codename}} stable"
+        repo: "deb [arch={{arch}}] https://download.docker.com/linux/debian {{codename}} stable"
         state: present
       become: yes
 
