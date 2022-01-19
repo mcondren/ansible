@@ -9,7 +9,6 @@
   vars:  
     home: "{{ansible_user_dir}}"
     codename: "{{ansible_distribution_release}}"
-    #user: "{{ansible_user_id}}"
   vars_prompt:
     - name: arch
       prompt: "Select hardware architecture (arm64/amd64):"
@@ -189,7 +188,6 @@
             - xkb-data
             - zsh
             - zsh-common
-            - bat
             - g++
             - libncurses-dev
             - cargo
@@ -214,9 +212,13 @@
         dest: "{{home}}/.oh-my-zsh/custom/themes/powerlevel10k"
         depth: 1
 
-    - name: Install dust (not in pkg manager yet) and Ansible doesn't have cargo support
-      shell: yes | sh -c "$(cargo install du-dust)" --unattended
-      become: yes
+    - name: Install "thefuck", "exa", and "bat" Rust packages to global location
+      community.general.cargo:
+        name: 
+          - "thefuck"
+          - "exa"
+          - "bat"
+        path: /usr/local
 
     - name: Clone mosh repo
       git:
