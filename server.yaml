@@ -199,11 +199,6 @@
         update_cache: true
       become: true
 
-    - name: Install thefuck package plugin
-      pip:
-        name: thefuck
-        executable: pip3
-
     - name: Installing oh-my-zsh
       shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
 
@@ -247,6 +242,10 @@
         chdir: "{{home}}/mosh"
       become: true
 
+    - name: import zpool
+      command: zpool import -f backup
+      become: true
+
     - name: Add github identity
       copy:
         dest: "{{home}}/.gitconfig"
@@ -259,6 +258,12 @@
       lineinfile: dest=/etc/zsh/zshenv
                   regexp="^export"
                   line="export ZDOTDIR=$HOME/.config/zsh"
+                  state=present
+      become: true
+
+    - name: Create ramdisk in fstab
+      lineinfile: dest=/etc/fstab
+                  line="ramdisk /tmp/cache tmpfs defaults,size=1G,x-gvfs-show 0 0"
                   state=present
       become: true
 
