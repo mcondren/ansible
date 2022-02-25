@@ -356,3 +356,11 @@
           - "exa"
           - "bat"
         path: /usr/local
+
+    - name: Copy rclone config
+      copy:
+        src: "/backup/files/rclone.conf"
+        dest: "{{home}}/.config/rclone/rclone.conf"
+        group: "{{ansible_user_id}}"
+        owner: "{{ansible_user_id}}"
+      become: true
