@@ -64,9 +64,7 @@
 
     - name: install docker repo
       apt_repository:
-        repo: >
-          "deb [arch={{arch}}] https://download.docker.com/linux/debian
-          {{codename}} stable"
+        repo: "deb [arch={{arch}}] https://download.docker.com/linux/debian {{codename}} stable"
         state: present
       become: true
 
@@ -271,8 +269,8 @@
       copy:
         src: "/etc/zsh/zshenv"
         dest: "{{home}}/.zshenv"
-        group: "{{user}}"
-        owner: "{{user}}"
+        group: "{{ansible_user_id}}"
+        owner: "{{ansible_user_id}}"
       become: true
 
     - name: Adding github key
