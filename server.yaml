@@ -205,24 +205,6 @@
         dest: "{{home}}/.oh-my-zsh/custom/themes/powerlevel10k"
         depth: 1
 
-    - name: Download Installer
-      get_url:
-        url: https://sh.rustup.rs
-        dest: /tmp/sh.rustup.rs
-        mode: '0755'
-        force: 'yes'
-
-    - name: install rust/cargo
-      shell: /tmp/sh.rustup.rs -y
-
-    - name: Install "thefuck", "exa", and "bat" Rust packages to global location
-      community.general.cargo:
-        name:
-          - "thefuck"
-          - "exa"
-          - "bat"
-        path: /usr/local
-
     - name: Clone mosh repo
       git:
         repo: https://github.com/mobile-shell/mosh.git
@@ -356,3 +338,21 @@
         name: "{{ansible_user_id}}"
         shell: /bin/zsh
       become: true
+
+    - name: Download Installer
+      get_url:
+        url: https://sh.rustup.rs
+        dest: /tmp/sh.rustup.rs
+        mode: '0755'
+        force: 'yes'
+
+    - name: install rust/cargo
+      shell: /tmp/sh.rustup.rs -y
+
+    - name: Install "thefuck", "exa", and "bat" Rust packages to global location
+      community.general.cargo:
+        name:
+          - "thefuck"
+          - "exa"
+          - "bat"
+        path: /usr/local
