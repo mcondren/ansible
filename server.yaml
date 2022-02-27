@@ -26,7 +26,11 @@
 
     - name: varcheck
       pause:
-        prompt: "Check variables above. Hit return to continue"
+        prompt: "Check variables above. Hit return to continue.  Have you done ssh keys and installed community.general?"
+
+    - name: add contrib and non-free repos
+      command: sed -i '/^\([^#].*main\)*$/s/main/& contrib non-free/' /etc/apt/sources.list
+      become: true
 
     - name: Create .config dir
       file:
@@ -192,6 +196,7 @@
           - exa
           - libssl-dev
           - yamllint
+          - spl
         state: latest
         update_cache: true
       become: true
@@ -229,10 +234,6 @@
       command: make install
       args:
         chdir: "{{home}}/mosh"
-      become: true
-
-    - name: import zpool
-      command: zpool import -f backup
       become: true
 
     - name: Add github identity
@@ -349,13 +350,32 @@
     - name: install rust/cargo
       shell: /tmp/sh.rustup.rs -y
 
-    - name: Install "thefuck", "exa", and "bat" Rust packages to global location
+    - name: Reboot to switch to zfs kernel
+      shell: "sleep 5 && reboot"
+      async: 1
+      poll: 0
+      become: true
+
+    - name: Wait for reboot
+      pause:
+        prompt: "reboot and then run playbook with --start-at-task"
+
+    - name: import zpool
+      command: zpool import -f backup
+      become: true
+
+    - name: Install exa, and bat Rust packages to global location
       community.general.cargo:
         name:
-          - "thefuck"
-          - "exa"
-          - "bat"
+          - exa
+          - bat
         path: /usr/local
+
+    - name: create rsync config dir
+      file:
+        path: "{{home}}/.config/rclone"
+        state: directory
+        mode: '0755'
 
     - name: Copy rclone config
       copy:
