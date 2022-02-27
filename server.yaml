@@ -364,11 +364,12 @@
       command: zpool import -f backup
       become: true
 
-    - name: Install exa, and bat Rust packages to global location
+    - name: Install exa, dust, and bat Rust packages to global location
       community.general.cargo:
         name:
           - exa
           - bat
+          - du-dust
         path: /usr/local
 
     - name: create rsync config dir
