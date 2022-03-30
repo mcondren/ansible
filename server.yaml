@@ -85,6 +85,7 @@
           - containerd.io
         state: absent
         update_cache: true
+        autoremove: yes
       become: true
 
     - name: Install docker
@@ -123,15 +124,11 @@
           - discover
           - discover-data
           - dns-root-data
-          - dnsmasq-base
           - dnsutils
           - doc-debian
           - emacsen-common
           - exfat-fuse
           - exfat-utils
-          - exim4-base
-          - exim4-config
-          - exim4-daemon-light
           - fd-find
           - ffmpeg
           - fontconfig
@@ -156,7 +153,6 @@
           - mysql-common
           - neovim
           - netcat-traditional
-          - network-manager
           - nmap
           - nmap-common
           - os-prober
@@ -182,7 +178,6 @@
           - tmux
           - traceroute
           - udisks2
-          - unattended-upgrades
           - unzip
           - wireless-regdb
           - x11-common
@@ -350,15 +345,13 @@
     - name: install rust/cargo
       shell: /tmp/sh.rustup.rs -y
 
-    - name: Reboot to switch to zfs kernel
-      shell: "sleep 5 && reboot"
-      async: 1
-      poll: 0
-      become: true
+    - name: Upgrade the OS (apt-get dist-upgrade)
+      apt:
+        upgrade: dist
 
     - name: Wait for reboot
       pause:
-        prompt: "reboot and then run playbook with --start-at-task"
+        prompt: "reboot and then run playbook with --start-at-task 'import zpool'"
 
     - name: import zpool
       command: zpool import -f backup
