@@ -192,6 +192,7 @@
           - libssl-dev
           - yamllint
           - spl
+          - lm-sensors
         state: latest
         update_cache: true
       become: true
