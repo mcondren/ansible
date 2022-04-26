@@ -66,9 +66,21 @@
         state: present
       become: true
 
+    - name: Install key for influxdata
+      apt_key:
+        url: "https://repos.influxdata.com/influxdb.key"
+        state: present
+      become: true
+
     - name: install docker repo
       apt_repository:
         repo: "deb [arch={{arch}}] https://download.docker.com/linux/debian {{codename}} stable"
+        state: present
+      become: true
+
+    - name: install docker repo
+      apt_repository:
+      repo: "deb https://repos.influxdata.com/debian {{codename}} stable"
         state: present
       become: true
 
@@ -319,13 +331,6 @@
         job: "/usr/bin/rclone sync /backup/docker crypt:backup/docker"
       become: true
 
-    - name: Add weekly zpool scrub to crontab
-      cron:
-        name: "zpool scrub"
-        special_time: weekly
-        job: "zpool scrub backup"
-      become: true
-
     - name: Upgrade all packages
       apt: upgrade=safe
       become: true
@@ -379,3 +384,11 @@
         group: "{{ansible_user_id}}"
         owner: "{{ansible_user_id}}"
       become: true
+
+    - name: Add telegraf config
+      copy:
+        src: "/backup/files/telegraf.conf"
+        dest: "/etc/telegraf/telegraf.conf"
+        group: "{{ansible_user_id}}"
+        owner: "{{ansible_user_id}}"
+      become:true
