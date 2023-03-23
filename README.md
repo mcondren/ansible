@@ -1,2 +1,2 @@
 # ansible
-Ansible Playbook for Debian Server deployment. 
+Ansible Playbooks for deployment. 
