@@ -1,0 +1,246 @@
+# ====================================================
+# Basic server setup
+# ====================================================
+---
+- hosts: localhost
+  become: false
+  gather_facts: true
+  user: "{{lookup('env', 'USER')}}"
+  vars:
+    home: "{{ansible_user_dir}}"
+    codename: "{{ansible_distribution_release}}"
+  vars_prompt:
+    - name: arch
+      prompt: "Select hardware architecture (arm64/amd64):"
+      default: "amd64"
+      private: false
+
+  tasks:
+    - name: Confirm variable facts are populated and accurate
+      ansible.builtin.debug:
+        msg:
+          - "$HOME is set to {{ home }}"
+          - "User is {{ansible_user}}"
+          - "Codename is {{codename}}"
+          - "Architecture is {{arch}}"
+
+    - name: varcheck
+      pause:
+        prompt: "Check variables above. Hit return to continue.  Have you done ssh keys?"
+
+    - name: Create .config dir
+      file:
+        path: "{{home}}/.config"
+        state: directory
+
+    - name: Create zsh config dir
+      file:
+        path: "{{home}}/.config/zsh"
+        state: directory
+
+    - name: Create nvim config dir
+      file:
+        path: "{{home}}/.config/nvim"
+        state: directory
+
+    - name: install essential packages
+      apt:
+        name:
+          - git
+          - software-properties-common
+          - python3-pip
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg-agent
+        update_cache: true
+      become: true
+
+    - name: install all packages
+      apt:
+        name:
+          - zoxide
+          - appstream
+          - attr
+          - autoconf
+          - automake
+          - autopoint
+          - autotools-dev
+          - bind9-host
+          - cgroupfs-mount
+          - cmdtest
+          - discover
+          - discover-data
+          - dns-root-data
+          - dnsutils
+          - doc-debian
+          - emacsen-common
+          - exfat-fuse
+          - fd-find
+          - ffmpeg
+          - fontconfig
+          - fonts-dejavu-core
+          - gdisk
+          - hdparm
+          - iw
+          - keyboard-configuration
+          - laptop-detect
+          - locales
+          - lsof
+          - lz4
+          - m4
+          - mailutils
+          - mailutils-common
+          - make
+          - man-db
+          - mariadb-common
+          - mdadm
+          - modemmanager
+          - mokutil
+          - mysql-common
+          - neovim
+          - netcat-traditional
+          - nmap
+          - nmap-common
+          - os-prober
+          - pciutils
+          - picocom
+          - pkg-config
+          - plocate
+          - powermgmt-base
+          - ppp
+          - protobuf-compiler
+          - psmisc
+          - python3
+          - reportbug
+          - ripgrep
+          - rsync
+          - runit-helper
+          - screen
+          - smartmontools
+          - tdb-tools
+          - tini
+          - tmux
+          - traceroute
+          - udisks2
+          - unzip
+          - wireless-regdb
+          - x11-common
+          - xclip
+          - xkb-data
+          - zsh
+          - zsh-common
+          - g++
+          - libncurses-dev
+          - fzf
+          - exa
+          - libssl-dev
+          - yamllint
+          - lm-sensors
+          - bat
+        state: latest
+        update_cache: true
+      become: true
+
+    - name: Installing oh-my-zsh
+      shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
+
+    - name: Install powerlevel10k theme
+      git:
+        repo: https://github.com/romkatv/powerlevel10k.git
+        dest: "{{home}}/.oh-my-zsh/custom/themes/powerlevel10k"
+        depth: 1
+
+    - name: Clone mosh repo
+      git:
+        repo: https://github.com/mobile-shell/mosh.git
+        dest: "{{home}}/mosh"
+
+    - name: autogen mosh configure file
+      command: ./autogen.sh
+      args:
+        chdir: "{{home}}/mosh"
+
+    - name: configure mosh build
+      command: ./configure
+      args:
+        chdir: "{{home}}/mosh"
+
+    - name: Build mosh
+      command: make
+      args:
+        chdir: "{{home}}/mosh"
+
+    - name: Install mosh
+      command: make install
+      args:
+        chdir: "{{home}}/mosh"
+      become: true
+
+    - name: Add github identity
+      copy:
+        dest: "{{home}}/.gitconfig"
+        content: |
+          [user]
+            name = mcondren
+            email = mcondren@gmail.com
+
+    - name: Export zsh DOTFILE location system-wide
+      lineinfile: dest=/etc/zsh/zshenv
+                  regexp="^export"
+                  line="export ZDOTDIR=$HOME/.config/zsh"
+                  state=present
+      become: true
+
+    - name: Copy .zshenv to $HOME
+      copy:
+        src: "/etc/zsh/zshenv"
+        dest: "{{home}}/.zshenv"
+        group: "{{ansible_user_id}}"
+        owner: "{{ansible_user_id}}"
+      become: true
+
+    - name: Adding github key
+      shell: |
+        eval `ssh-agent -s`
+        ssh-add $HOME/.ssh/github
+        ssh-add $HOME/.ssh/id_rsa
+
+    - name: Clone dotfiles repo
+      git:
+        repo: git@github.com:mcondren/dotfiles.git
+        version: master
+        dest: "{{home}}/dotfiles"
+        key_file: "{{home}}/.ssh/github"
+        accept_hostkey: true
+      # ssh-agent doesn't allow key to pass through remote sudo commands.
+      become: false
+
+    - name: Create a symbolic links for dotfiles (.zshrc)
+      ansible.builtin.file:
+        src: "{{home}}/dotfiles/.zshrc"
+        dest: "{{home}}/.config/zsh/.zshrc"
+        state: link
+
+    - name: Create a symbolic links for dotfiles (nvim.init)
+      ansible.builtin.file:
+        src: "{{home}}/dotfiles/init.vim"
+        dest: "{{home}}/.config/nvim/init.vim"
+        state: link
+
+    - name: Create a symbolic links for dotfiles (.p10k.zsh)
+      ansible.builtin.file:
+        src: "{{home}}/dotfiles/.p10k.zsh"
+        dest: "{{home}}/.config/zsh/.p10k.zsh"
+        state: link
+
+    - name: Upgrade all packages
+      apt: upgrade=safe
+      become: true
+
+    - name: Set shell to ZSH
+      user:
+        name: "{{ansible_user_id}}"
+        shell: /bin/zsh
+      become: true
+
