@@ -76,6 +76,7 @@
           - doc-debian
           - emacsen-common
           - exfat-fuse
+          - kitty
           - fd-find
           - ffmpeg
           - fontconfig
@@ -232,6 +233,12 @@
       ansible.builtin.file:
         src: "{{home}}/dotfiles/.p10k.zsh"
         dest: "{{home}}/.config/zsh/.p10k.zsh"
+        state: link
+
+    - name: Create a symbolic link for dotfiles (kitty)
+      ansible.builtin.file:
+        src: "{{home}}/dotfiles/kitty"
+        dest: "{{home}}/.config/kitty"
         state: link
 
     - name: Upgrade all packages
