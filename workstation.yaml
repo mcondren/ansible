@@ -139,6 +139,7 @@
           - yamllint
           - lm-sensors
           - bat
+            duf
         state: latest
         update_cache: true
       become: true
