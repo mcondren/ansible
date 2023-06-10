@@ -26,10 +26,10 @@
 
     - name: varcheck
       pause:
-        prompt: "Check variables above. Hit return to continue.  Have you done ssh keys and installed community.general?"
+        prompt: "Check variables above. Hit return to continue.  Have you added ssh keys?"
 
     - name: add contrib and non-free repos
-      command: sed -i '/^\([^#].*main\)*$/s/main/& contrib non-free/' /etc/apt/sources.list
+      command: sed -i '/^\([^#].*main\)*$/s/main/& contrib non-free non-free-firmware/' /etc/apt/sources.list
       become: true
 
     - name: Create .config dir
@@ -60,16 +60,12 @@
         update_cache: true
       become: true
 
-    - name: Install the gpg key for docker
-      apt_key:
-        url: "https://download.docker.com/linux/debian/gpg"
-        state: present
+    - name: Install docker gpg key
+      command: wget -qO- https://download.docker.com/linux/debian/gpg | tee /etc/apt/trusted.gpg.d/docker.asc
       become: true
 
     - name: Install key for influxdata
-      apt_key:
-        url: "https://repos.influxdata.com/influxdb.key"
-        state: present
+      command: wget -qO- https://repos.influxdata.com/influxdb.key | tee /etc/apt/trusted.gpg.d/influx.asc 
       become: true
 
     - name: install docker repo
@@ -78,9 +74,9 @@
         state: present
       become: true
 
-    - name: install docker repo
+    - name: install influxDB repo
       apt_repository:
-      repo: "deb https://repos.influxdata.com/debian {{codename}} stable"
+        repo: "deb https://repos.influxdata.com/debian {{codename}} stable"
         state: present
       become: true
 
@@ -205,6 +201,9 @@
           - yamllint
           - spl
           - lm-sensors
+          - exa
+          - bat
+          - duf
         state: latest
         update_cache: true
       become: true
@@ -258,6 +257,18 @@
                   line="export ZDOTDIR=$HOME/.config/zsh"
                   state=present
       become: true
+
+    - name: add prems for telegraf to sudoers
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        line: '{{ item }}'
+      with_items:
+        - '# For smartctl add the following lines:'
+        - 'Cmnd_Alias SMARTCTL = /usr/sbin/smartctl'
+        - 'telegraf  ALL=(ALL) NOPASSWD: SMARTCTL'
+        - 'Defaults!SMARTCTL !logfile, !syslog, !pam_session'
+
 
     - name: Create ramdisk in fstab
       lineinfile: dest=/etc/fstab
@@ -341,16 +352,6 @@
         shell: /bin/zsh
       become: true
 
-    - name: Download Installer
-      get_url:
-        url: https://sh.rustup.rs
-        dest: /tmp/sh.rustup.rs
-        mode: '0755'
-        force: 'yes'
-
-    - name: install rust/cargo
-      shell: /tmp/sh.rustup.rs -y
-
     - name: Upgrade the OS (apt-get dist-upgrade)
       apt:
         upgrade: dist
@@ -362,14 +363,6 @@
     - name: import zpool
       command: zpool import -f backup
       become: true
-
-    - name: Install exa, dust, and bat Rust packages to global location
-      community.general.cargo:
-        name:
-          - exa
-          - bat
-          - du-dust
-        path: /usr/local
 
     - name: create rsync config dir
       file:
@@ -391,4 +384,4 @@
         dest: "/etc/telegraf/telegraf.conf"
         group: "{{ansible_user_id}}"
         owner: "{{ansible_user_id}}"
-      become:true
+      become: true
