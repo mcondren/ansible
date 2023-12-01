@@ -118,9 +118,6 @@
           - appstream
           - attr
           - kmod
-          - zfsutils-linux
-          - zfs-dkms
-          - zfs-zed
           - autoconf
           - automake
           - autopoint
@@ -250,7 +247,7 @@
         content: |
           [user]
             name = mcondren
-            email = mcondren@gmail.com
+            email = matthew.condren@icloud.com
 
     - name: Export zsh DOTFILE location system-wide
       lineinfile: dest=/etc/zsh/zshenv
@@ -276,6 +273,11 @@
                   line="ramdisk /tmp/cache tmpfs defaults,size=1G,x-gvfs-show 0 0"
                   state=present
       become: true
+
+    - name: mount NAS nfs drive
+      lineinfile: dest=/etc/fstab
+                  line=''
+                  state=present
 
     - name: Copy .zshenv to $HOME
       copy:
@@ -353,17 +355,12 @@
         shell: /bin/zsh
       become: true
 
+    - name: automount share
+      shell: 'mount -a'
+
     - name: Upgrade the OS (apt-get dist-upgrade)
       apt:
         upgrade: dist
-
-    - name: Wait for reboot
-      pause:
-        prompt: "reboot and then run playbook with --start-at-task 'import zpool'"
-
-    - name: import zpool
-      command: zpool import -f backup
-      become: true
 
     - name: create rsync config dir
       file:
