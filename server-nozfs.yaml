@@ -202,6 +202,7 @@
           - exa
           - bat
           - duf
+          - mosh
         state: latest
         update_cache: true
       become: true
@@ -214,32 +215,6 @@
         repo: https://github.com/romkatv/powerlevel10k.git
         dest: "{{home}}/.oh-my-zsh/custom/themes/powerlevel10k"
         depth: 1
-
-    - name: Clone mosh repo
-      git:
-        repo: https://github.com/mobile-shell/mosh.git
-        dest: "{{home}}/mosh"
-
-    - name: autogen mosh configure file
-      command: ./autogen.sh
-      args:
-        chdir: "{{home}}/mosh"
-
-    - name: configure mosh build
-      command: ./configure
-      args:
-        chdir: "{{home}}/mosh"
-
-    - name: Build mosh
-      command: make
-      args:
-        chdir: "{{home}}/mosh"
-
-    - name: Install mosh
-      command: make install
-      args:
-        chdir: "{{home}}/mosh"
-      become: true
 
     - name: Add github identity
       copy:
@@ -276,7 +251,7 @@
 
     - name: mount NAS nfs drive
       lineinfile: dest=/etc/fstab
-                  line=''
+                  line='coldstorage.ansible.house:/mnt/ColdStorage/backup   /backup   nfs4   defaults 0 0'
                   state=present
 
     - name: Copy .zshenv to $HOME
