@@ -102,6 +102,7 @@
           - docker-ce
           - docker-ce-cli
           - containerd.io
+          - docker-compose-plugin
         update_cache: true
       register: apt_status
       until: apt_status is success
@@ -112,7 +113,6 @@
     - name: install all packages
       apt:
         name:
-          - docker-compose
           - zoxide
           - rclone
           - appstream
