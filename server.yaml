@@ -93,7 +93,7 @@
           - containerd.io
         state: absent
         update_cache: true
-        autoremove: yes
+        autoremove: true
       become: true
 
     - name: Install docker
@@ -205,19 +205,13 @@
           - exa
           - bat
           - duf
-          - mosh  
+          - mosh
         state: latest
         update_cache: true
       become: true
 
     - name: Installing oh-my-zsh
       shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
-
-    - name: Install powerlevel10k theme
-      git:
-        repo: https://github.com/romkatv/powerlevel10k.git
-        dest: "{{home}}/.oh-my-zsh/custom/themes/powerlevel10k"
-        depth: 1
 
     - name: Add github identity
       copy:
@@ -286,12 +280,6 @@
       ansible.builtin.file:
         src: "{{home}}/dotfiles/init.vim"
         dest: "{{home}}/.config/nvim/init.vim"
-        state: link
-
-    - name: Create a symbolic links for dotfiles (.p10k.zsh)
-      ansible.builtin.file:
-        src: "{{home}}/dotfiles/.p10k.zsh"
-        dest: "{{home}}/.config/zsh/.p10k.zsh"
         state: link
 
     - name: Clone docker repo
