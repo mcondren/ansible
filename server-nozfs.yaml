@@ -47,6 +47,16 @@
         path: "{{home}}/.config/nvim"
         state: directory
 
+    - name: Create kitty config dir
+      file:
+        path: "{{home}}/.config/kitty"
+        state: directory
+
+    - name: Create kitty config dir
+      file:
+        path: "{{home}}/.config/kitty/themes"
+        state: directory
+
     - name: install essential packages
       apt:
         name:
@@ -64,19 +74,9 @@
       command: wget -qO- https://download.docker.com/linux/debian/gpg | tee /etc/apt/trusted.gpg.d/docker.asc
       become: true
 
-    - name: Install key for influxdata
-      command: wget -qO- https://repos.influxdata.com/influxdb.key | tee /etc/apt/trusted.gpg.d/influx.asc 
-      become: true
-
     - name: install docker repo
       apt_repository:
         repo: "deb [arch={{arch}}] https://download.docker.com/linux/debian {{codename}} stable"
-        state: present
-      become: true
-
-    - name: install influxDB repo
-      apt_repository:
-        repo: "deb https://repos.influxdata.com/debian {{codename}} stable"
         state: present
       become: true
 
@@ -203,6 +203,7 @@
           - bat
           - duf
           - mosh
+          - kitty
         state: latest
         update_cache: true
       become: true
@@ -281,6 +282,18 @@
       ansible.builtin.file:
         src: "{{home}}/dotfiles/init.vim"
         dest: "{{home}}/.config/nvim/init.vim"
+        state: link
+
+    - name: Create a symbolic links for dotfiles (kitty.conf)
+      ansible.builtin.file:
+        src: "{{home}}/dotfiles/kitty/kitty.conf"
+        dest: "{{home}}/.config/kitty/kitty.conf"
+        state: link
+
+    - name: Create a symbolic links for dotfiles (kitty theme)
+      ansible.builtin.file:
+        src: "{{home}}/dotfiles/kitty/themes/gruvbox.conf"
+        dest: "{{home}}/.config/kitty/themes/gruvbox.conf"
         state: link
 
     - name: Clone docker repo
